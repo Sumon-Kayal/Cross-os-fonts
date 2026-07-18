@@ -9,6 +9,7 @@ BACKUP_DIR="$HOME/.local/share/fonts/cross-os_backup_$(date +%Y%m%d_%H%M%S)"
 MOUNT_POINT="$HOME/.cross-os-fonts/mount"
 FONT_SRC=""
 MOUNTED_BY_SCRIPT=0
+MOUNT_ERR_FILE=$(mktemp)
 
 # Runs on ANY exit (success, error, or Ctrl+C) — guarantees a partition we
 # mounted never stays mounted if something fails mid-script.
@@ -18,7 +19,7 @@ cleanup_on_exit() {
         sudo umount "$MOUNT_POINT" 2>/dev/null || true
         rmdir "$MOUNT_POINT" 2>/dev/null || true
     fi
-    rm -f /tmp/mount_err 2>/dev/null || true
+    rm -f "$MOUNT_ERR_FILE" 2>/dev/null || true
 }
 trap cleanup_on_exit EXIT
 
@@ -28,6 +29,11 @@ echo "=================================================="
 
 # --- Shared: back up existing fonts + install ---
 install_fonts() {
+    if ! command -v fc-cache &> /dev/null; then
+        echo "❌ 'fc-cache' is required. Install with: sudo apt install fontconfig"
+        exit 1
+    fi
+
     local font_count
     font_count=$(find "$FONT_SRC" -type f \( -iname "*.ttf" -o -iname "*.otf" -o -iname "*.ttc" \) | wc -l)
     if [[ "$font_count" -eq 0 ]]; then
@@ -41,7 +47,10 @@ install_fonts() {
         read -rp "Existing fonts found in $TARGET_DIR. Back up before overwriting? [Y/n] " backup_confirm
         if [[ ! "$backup_confirm" =~ ^[Nn]$ ]]; then
             mkdir -p "$BACKUP_DIR"
-            cp -r "$TARGET_DIR"/* "$BACKUP_DIR/" 2>/dev/null || true
+            if ! cp -r "$TARGET_DIR"/* "$BACKUP_DIR/" 2>/dev/null; then
+                echo "❌ Backup failed. Aborting installation."
+                exit 1
+            fi
             echo "🗄️  Backed up existing fonts to $BACKUP_DIR"
         fi
     fi
@@ -50,7 +59,10 @@ install_fonts() {
     read -rp "Install all $font_count found fonts now? [Y/n] " install_confirm
     if [[ ! "$install_confirm" =~ ^[Nn]$ ]]; then
         mkdir -p "$TARGET_DIR"
-        find "$FONT_SRC" -type f \( -iname "*.ttf" -o -iname "*.otf" -o -iname "*.ttc" \) -exec cp {} "$TARGET_DIR/" \;
+        if ! find "$FONT_SRC" -type f \( -iname "*.ttf" -o -iname "*.otf" -o -iname "*.ttc" \) -exec cp {} "$TARGET_DIR/" \; ; then
+            echo "❌ Font installation failed."
+            exit 1
+        fi
         fc-cache -fv > /dev/null
         echo "✅ Fonts installed to $TARGET_DIR"
     else
@@ -192,11 +204,6 @@ run_option_c() {
 
 # --- Option B: use an existing dual-boot Windows partition ---
 run_option_b() {
-    if ! command -v fc-cache &> /dev/null; then
-        echo "❌ 'fc-cache' is required. Install with: sudo apt install fontconfig"
-        exit 1
-    fi
-
     echo ""
     echo "You can provide either:"
     echo "  1) A path that's already mounted (e.g. /mnt/windows, /media/you/OS)"
@@ -217,9 +224,9 @@ run_option_b() {
         fi
         echo "🔧 Mounting $DRIVE_PATH to $MOUNT_POINT (requires sudo)..."
         mkdir -p "$MOUNT_POINT"
-        if ! sudo mount -o ro "$DRIVE_PATH" "$MOUNT_POINT" 2>/tmp/mount_err; then
+        if ! sudo mount -o ro "$DRIVE_PATH" "$MOUNT_POINT" 2>"$MOUNT_ERR_FILE"; then
             echo "❌ Mount failed:"
-            cat /tmp/mount_err
+            cat "$MOUNT_ERR_FILE"
             echo "If this is an NTFS partition, make sure ntfs-3g is installed:"
             echo "  sudo apt install ntfs-3g"
             exit 1
@@ -253,6 +260,9 @@ run_option_b() {
             rmdir "$MOUNT_POINT" 2>/dev/null || true
             MOUNTED_BY_SCRIPT=0
             echo "🔌 Unmounted."
+        else
+            MOUNTED_BY_SCRIPT=0
+            echo "ℹ️  Mount preserved at $MOUNT_POINT"
         fi
     fi
 }

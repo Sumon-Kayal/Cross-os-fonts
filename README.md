@@ -54,8 +54,10 @@ Fonts are installed to `~/.local/share/fonts/cross-os` (user-level, no root requ
 The fonts this script copies are proprietary and licensed as part of the source operating system. The vendor's EULA does not grant rights to extract and redistribute these fonts for use outside a licensed installation. This script is provided for personal, informational, and educational use on a machine where you hold a valid license for the source OS. You are responsible for complying with the applicable font licensing terms.
 
 If you just want visually similar open alternatives without any licensing concerns, consider:
-- `ttf-mscorefonts-installer` (apt) — for older core fonts
 - [Carlito](https://fontlibrary.org/en/font/carlito) / Caladea — metric-compatible substitutes for Calibri/Cambria
+
+Other proprietary alternatives:
+- `ttf-mscorefonts-installer` (apt) — downloads older Microsoft core fonts (Arial, Times New Roman, etc.) under Microsoft's EULA
 
 ## License
 
