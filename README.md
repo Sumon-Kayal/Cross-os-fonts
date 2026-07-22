@@ -1,5 +1,7 @@
 # cross-os-fonts
 
+![cross-os-fonts banner](assets/banner.png)
+
 A small Bash script that copies system fonts from an official Windows installer image or an existing dual-boot Windows partition, and installs them for the current user on Linux.
 
 This works directly against the official bootable installer ISO, which 7-Zip can read natively.
