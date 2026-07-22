@@ -1,66 +1,246 @@
-# Cross os fonts
+# Cross OS Fonts
 
-![cross-os-fonts banner](assets/banner/banner.png)
+![Cross OS Fonts Banner](assets/banner/banner.png)
 
-A small Bash script that copies system fonts from an official Windows installer image or an existing dual-boot Windows partition, and installs them for the current user on Linux.
+> Install Windows system fonts on Linux from an official Windows ISO or an existing dual-boot Windows installation.
 
-This works directly against the official bootable installer ISO, which 7-Zip can read natively.
+Cross OS Fonts is a lightweight Bash script that copies Windows system fonts from a legitimate source and installs them for the **current Linux user**.
 
-## How it works
+No packaging. No registry. No Windows VM required.
 
-The script offers three ways to source the fonts:
+---
 
-- **[A] Download the official ISO** — you open Microsoft's download page yourself, copy the generated (time-limited) link, and paste it in. The script downloads the ISO, then digs through two nested containers (`sources/install.wim` → `Windows/Fonts`) to pull out the fonts.
-- **[B] Use an existing dual-boot Windows partition** — if Windows is already installed alongside Linux on this machine, paste either an already-mounted path (e.g. `/mnt/windows`) or a raw block device (e.g. `/dev/sda2`), and the script mounts it read-only, finds `Windows/Fonts`, and copies from there directly. No download needed.
-- **[C] Use an ISO you already have** — if you've already downloaded the ISO, paste its path and the script extracts fonts from it without downloading anything again. Your original ISO is never modified or deleted.
+## ✨ Features
 
-All three paths converge on the same install step: fonts are backed up (timestamped) if you already have some installed, then copied to `~/.local/share/fonts/cross-os` and the font cache is refreshed.
+- 📀 Extract fonts directly from an official Windows installation ISO
+- 💽 Copy fonts from an existing dual-boot Windows partition
+- 📁 Use an already-downloaded Windows ISO
+- 🔄 Automatically detects the correct Windows edition inside `install.wim`
+- 💾 Creates timestamped backups before replacing existing fonts
+- 👤 Installs fonts to the current user's home directory
+- ⚡ Refreshes the font cache automatically
 
-Multi-edition ISOs are handled automatically — the script detects every edition packed inside `install.wim` and tries each one until it finds a valid `Fonts` folder, rather than assuming the first edition is always the right one.
+---
 
-## Requirements
+# How it Works
 
-- `curl` (Option A only)
-- `7z` (`p7zip-full`) (Options A and C)
-- `fc-cache` (`fontconfig`)
-- `ntfs-3g` (Option B, if mounting an NTFS partition yourself)
+The script provides three installation methods.
 
-Install on Debian/Ubuntu:
+## 🅰️ Download the Official Windows ISO
+
+1. Open Microsoft's Windows download page.
+2. Generate a download link.
+3. Paste the temporary URL into the script.
+4. The script downloads the ISO and extracts fonts from:
+
+```
+
+ISO
+└── sources
+└── install.wim
+└── Windows
+└── Fonts
+
+```
+
+---
+
+## 🅱️ Use a Dual-Boot Windows Installation
+
+If Windows already exists on the machine:
+
+- Paste a mounted path
+
+```
+
+/mnt/windows
+
+```
+
+or
+
+- Paste the Windows partition
+
+```
+
+/dev/sda2
+
+```
+
+The script mounts it read-only and copies the fonts directly.
+
+No download required.
+
+---
+
+## 🅲 Use an Existing Windows ISO
+
+Already have the ISO?
+
+Simply provide its path.
+
+```
+
+~/Downloads/Win11.iso
+
+```
+
+The script extracts the fonts without modifying or deleting your ISO.
+
+---
+
+Regardless of the source, fonts are installed into
+
+```
+
+~/.local/share/fonts/cross-os
+
+```
+
+and the font cache is refreshed automatically.
+
+---
+
+# Requirements
+
+## Debian / Ubuntu
+
 ```bash
 sudo apt install curl p7zip-full fontconfig ntfs-3g
 ```
 
-## Usage
+## Arch Linux
 
 ```bash
+sudo pacman -S curl p7zip fontconfig ntfs-3g
+```
+
+## Fedora
+
+```bash
+sudo dnf install curl p7zip p7zip-plugins fontconfig ntfs-3g
+```
+
+## openSUSE
+
+```bash
+sudo zypper install curl 7zip fontconfig ntfs-3g
+```
+
+---
+
+# Quick Start
+
+Run directly from GitHub:
+
+```bash
+curl -O https://raw.githubusercontent.com/Sumon-Kayal/Cross-os-fonts/refs/heads/Sumon-Kayal-patch-1/cross-os-fonts.sh
 chmod +x cross-os-fonts.sh
+bash cross-os-fonts.sh
+```
+
+Or download first:
+
+```bash
+curl -O https://raw.githubusercontent.com/Sumon-Kayal/Cross-os-fonts/refs/heads/Sumon-Kayal-patch-1/cross-os-fonts.sh
+
+chmod +x cross-os-fonts.sh
+
 ./cross-os-fonts.sh
 ```
 
-Follow the prompts:
-1. Choose **A**, **B**, or **C** depending on how you want to source the fonts.
-2. Provide the URL, drive path, or ISO path as asked.
-3. Confirm backup of existing fonts (if any).
-4. Confirm font installation.
-5. (Option A only) choose whether to keep the downloaded ISO.
+---
 
-Fonts are installed to `~/.local/share/fonts/cross-os` (user-level, no root required for the install step itself — Option B's mount step needs `sudo`).
+# Usage
 
-## Troubleshooting
+After launching the script:
 
-- **"Mount failed" in Option B**: usually means `ntfs-3g` isn't installed. Run `sudo apt install ntfs-3g` and try again. Partitions with BitLocker or a hibernation lock from Fast Startup can also refuse read-only mounts from Linux — fully shut down Windows (not "Fast Startup" sleep) before mounting.
-- **"Fonts directory not found" in Option A/C**: the script tries every edition packed into `install.wim`, not just the first one, so this usually means the source ISO itself is non-standard (a language pack ISO, an update-only ISO, etc.) rather than a full installer ISO.
+1. Select one of the three installation methods.
+2. Provide the requested ISO path, download URL, or Windows partition.
+3. Confirm backup (if existing fonts are found).
+4. Confirm installation.
+5. (Download mode only) choose whether to keep the downloaded ISO.
 
-## ⚠️ Licensing notice
+---
 
-The fonts this script copies are proprietary and licensed as part of the source operating system. The vendor's EULA does not grant rights to extract and redistribute these fonts for use outside a licensed installation. This script is provided for personal, informational, and educational use on a machine where you hold a valid license for the source OS. You are responsible for complying with the applicable font licensing terms.
+# Installation Location
 
-If you just want visually similar open alternatives without any licensing concerns, consider:
-- [Carlito](https://fontlibrary.org/en/font/carlito) / Caladea — metric-compatible substitutes for Calibri/Cambria
+Fonts are installed into
 
-Other proprietary alternatives:
-- `ttf-mscorefonts-installer` (apt) — downloads older Microsoft core fonts (Arial, Times New Roman, etc.) under Microsoft's EULA
+```
 
-## License
+~/.local/share/fonts/cross-os
 
-This script is released under the [MIT License](LICENSE). The MIT license covers this script only — it does not extend any rights to the fonts it extracts.
+```
+
+No root privileges are required for installation.
+
+Only Option **B** requires `sudo` to mount a Windows partition.
+
+---
+
+# Troubleshooting
+
+### Mount failed
+
+Usually caused by one of the following:
+
+- `ntfs-3g` is not installed
+- Windows Fast Startup is enabled
+- The partition is BitLocker encrypted
+
+Disable Fast Startup or fully shut down Windows before trying again.
+
+---
+
+### Fonts directory not found
+
+The script automatically checks every edition inside `install.wim`.
+
+If no Fonts directory is found, the ISO is likely:
+
+- a language pack
+- an update image
+- or another non-standard Windows ISO
+
+---
+
+# License Notice
+
+> **Windows fonts are proprietary software.**
+
+This project **does not include or redistribute any fonts.**
+
+The script only copies fonts from:
+
+- an official Microsoft Windows installation ISO
+- or your own licensed Windows installation.
+
+You are responsible for complying with Microsoft's licensing terms.
+
+---
+
+## Free Alternatives
+
+If you prefer open-source fonts:
+
+- Carlito (Calibri-compatible)
+- Caladea (Cambria-compatible)
+
+---
+
+## Other Proprietary Option
+
+```
+ttf-mscorefonts-installer
+```
+
+Installs Microsoft's older Core Fonts (Arial, Times New Roman, Courier New, etc.) under Microsoft's EULA.
+
+---
+
+# License
+
+This project is licensed under the **MIT License**.
+
+The MIT license applies **only to this script** and **does not grant any rights to Microsoft's proprietary fonts**.
