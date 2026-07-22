@@ -1,4 +1,4 @@
-# cross-os-fonts
+# Cross os fonts
 
 ![cross-os-fonts banner](assets/banner/banner.png)
 
