@@ -2,7 +2,7 @@
 
 ![Cross OS Fonts Banner](assets/banner/banner.png)
 
-> Install Windows system fonts on Linux from an official Windows ISO or an existing dual-boot Windows installation.
+> Install Windows system fonts on Linux from an official Windows ISO (containing `sources/install.wim`) or an existing dual-boot Windows installation. ISOs using other image formats (e.g., install.esd) are unsupported unless the script is updated to handle them.
 
 Cross OS Fonts is a lightweight Bash script that copies Windows system fonts from a legitimate source and installs them for the **current Linux user**.
 
@@ -31,15 +31,16 @@ The script provides three installation methods.
 1. Open Microsoft's Windows download page.
 2. Generate a download link.
 3. Paste the temporary URL into the script.
-4. The script downloads the ISO and extracts fonts from:
+4. The script downloads the ISO (which must contain `sources/install.wim`) and extracts fonts from:
 
-```
+```text
 
 ISO
 └── sources
-└── install.wim
-└── Windows
-└── Fonts
+    └── install.wim
+        └── [WIM edition]
+            └── Windows
+                └── Fonts
 
 ```
 
@@ -51,7 +52,7 @@ If Windows already exists on the machine:
 
 - Paste a mounted path
 
-```
+```text
 
 /mnt/windows
 
@@ -61,7 +62,7 @@ or
 
 - Paste the Windows partition
 
-```
+```text
 
 /dev/sda2
 
@@ -79,7 +80,7 @@ Already have the ISO?
 
 Simply provide its path.
 
-```
+```text
 
 ~/Downloads/Win11.iso
 
@@ -91,7 +92,7 @@ The script extracts the fonts without modifying or deleting your ISO.
 
 Regardless of the source, fonts are installed into
 
-```
+```text
 
 ~/.local/share/fonts/cross-os
 
@@ -134,7 +135,7 @@ sudo zypper install curl 7zip fontconfig ntfs-3g
 Run directly from GitHub:
 
 ```bash
-curl -O https://raw.githubusercontent.com/Sumon-Kayal/Cross-os-fonts/refs/heads/Sumon-Kayal-patch-1/cross-os-fonts.sh
+curl -O https://raw.githubusercontent.com/Sumon-Kayal/Cross-os-fonts/refs/heads/main/cross-os-fonts.sh
 chmod +x cross-os-fonts.sh
 bash cross-os-fonts.sh
 ```
@@ -142,7 +143,7 @@ bash cross-os-fonts.sh
 Or download first:
 
 ```bash
-curl -O https://raw.githubusercontent.com/Sumon-Kayal/Cross-os-fonts/refs/heads/Sumon-Kayal-patch-1/cross-os-fonts.sh
+curl -O https://raw.githubusercontent.com/Sumon-Kayal/Cross-os-fonts/refs/heads/main/cross-os-fonts.sh
 
 chmod +x cross-os-fonts.sh
 
@@ -167,7 +168,7 @@ After launching the script:
 
 Fonts are installed into
 
-```
+```text
 
 ~/.local/share/fonts/cross-os
 
@@ -181,7 +182,7 @@ Only Option **B** requires `sudo` to mount a Windows partition.
 
 # Troubleshooting
 
-### Mount failed
+## Mount failed
 
 Usually caused by one of the following:
 
@@ -193,7 +194,7 @@ Disable Fast Startup or fully shut down Windows before trying again.
 
 ---
 
-### Fonts directory not found
+## Fonts directory not found
 
 The script automatically checks every edition inside `install.wim`.
 
@@ -231,7 +232,7 @@ If you prefer open-source fonts:
 
 ## Other Proprietary Option
 
-```
+```text
 ttf-mscorefonts-installer
 ```
 

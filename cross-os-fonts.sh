@@ -59,7 +59,14 @@ install_fonts() {
     read -rp "Install all $font_count found fonts now? [Y/n] " install_confirm
     if [[ ! "$install_confirm" =~ ^[Nn]$ ]]; then
         mkdir -p "$TARGET_DIR"
-        if ! find "$FONT_SRC" -type f \( -iname "*.ttf" -o -iname "*.otf" -o -iname "*.ttc" \) -exec cp {} "$TARGET_DIR/" \; ; then
+        local copy_failed=0
+        while IFS= read -r -d '' font_file; do
+            if ! cp "$font_file" "$TARGET_DIR/"; then
+                copy_failed=1
+                break
+            fi
+        done < <(find "$FONT_SRC" -type f \( -iname "*.ttf" -o -iname "*.otf" -o -iname "*.ttc" \) -print0)
+        if [[ "$copy_failed" -eq 1 ]]; then
             echo "❌ Font installation failed."
             exit 1
         fi
