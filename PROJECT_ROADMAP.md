@@ -14,7 +14,7 @@ installation.
 
 - [x] Core Bash installer
 - [x] Interactive menu
-- [x] ISO support (`install.wim` **and** `install.esd`)
+- [x] ISO support (`install.wim` **and** `install.esd`) — implemented, validation pending
 - [x] Existing Windows installation support (dual-boot partition)
 - [x] Use an already-downloaded local ISO (no re-download needed)
 - [x] Font installation into user profile
@@ -109,10 +109,7 @@ Goal: verify on **real hardware**.
 
 # Quality Assurance
 
-- [ ] Run ShellCheck (blocked this patch -- no network access in the
-      review environment; script was instead reviewed manually and
-      checked with targeted Bash tests: `confirm()` logic, `read`/stdin
-      behavior under `set -e`, `bash -n` syntax check)
+- [ ] Run ShellCheck
 - [ ] Test on real hardware
 - [ ] Verify installer cleanup
 - [ ] Test installer recovery

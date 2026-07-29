@@ -2,7 +2,7 @@
 
 ![Cross OS Fonts Banner](assets/banner/banner.png)
 
-> Install Windows system fonts on Linux from an official Windows ISO (containing `sources/install.wim` **or** `sources/install.esd`) or an existing dual-boot Windows installation. Works with any Windows edition Microsoft ships as one of those two image formats — Windows 10, Windows 11, and Windows Server ISOs all qualify, not just Windows 11.
+> Install Windows system fonts on Linux from an official Windows ISO (containing `sources/install.wim` **or** `sources/install.esd`) or an existing dual-boot Windows installation. Implemented to support any Windows edition Microsoft ships as one of those two image formats — Windows 10, Windows 11, and Windows Server ISOs should all work, though comprehensive validation across all editions and versions is pending.
 
 Cross OS Fonts is a lightweight Bash script that copies Windows system fonts from a legitimate source and installs them for the **current Linux user**.
 
@@ -30,10 +30,10 @@ No packaging. No registry. No Windows VM required.
 
 ## ✨ Features
 
-- 📀 Extract fonts directly from an official Windows installation ISO — works with `install.wim` **and** `install.esd` images, so it isn't limited to a single Windows version
+- 📀 Extract fonts directly from an official Windows installation ISO — implemented to support both `install.wim` **and** `install.esd` images (validation pending for all Windows versions)
 - 💽 Copy fonts from an existing dual-boot Windows partition
 - 📁 Use an already-downloaded Windows ISO
-- 🔄 Automatically detects the correct Windows edition inside the image (multi-edition ISOs included)
+- 🔄 Automatically detects the correct Windows edition inside the image (multi-edition ISO support implemented, validation pending)
 - 💾 Creates timestamped backups before replacing existing fonts
 - 👤 Installs fonts to the current user's home directory (no root needed for installation itself)
 - ⚡ Refreshes the font cache automatically
@@ -154,9 +154,15 @@ sudo dnf install wget2 7zip fontconfig ntfs-3g
 
 ## openSUSE
 
+### openSUSE Tumbleweed
+
 ```bash
 sudo zypper install wget2 7zip fontconfig ntfs-3g
 ```
+
+### openSUSE Leap 15.6
+
+`wget2` is not available in the default Leap 15.6 repositories. Use Tumbleweed or install `wget2` from an alternative source.
 
 ---
 
@@ -221,7 +227,7 @@ After launching the script:
 4. Confirm installation.
 5. (Download mode only) choose whether to keep the downloaded ISO.
 
-Every prompt accepts a full "yes"/"no" as well as a single "y"/"n" letter, in any case.
+Yes/no confirmation prompts accept a full "yes"/"no" as well as a single "y"/"n" letter, in any case.
 
 ---
 

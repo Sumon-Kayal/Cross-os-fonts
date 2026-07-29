@@ -117,6 +117,7 @@ extract_fonts_from_iso() {
         exit 1
     fi
 
+    rm -rf "$FONTS_EXTRACT_DIR"
     mkdir -p "$FONTS_EXTRACT_DIR"
 
     echo "📂 Extracting Windows image from ISO..."
@@ -193,7 +194,10 @@ run_option_a() {
 
     mkdir -p "$BASE_DIR"
     echo "🌐 Downloading ISO (~5-6GB, be patient)..."
-    wget2 -O "$ISO_FILE" "$DOWNLOAD_URL"
+    if ! wget2 -O "$ISO_FILE" "$DOWNLOAD_URL"; then
+        echo "❌ Download failed."
+        exit 1
+    fi
 
     extract_fonts_from_iso "$ISO_FILE"
     install_fonts

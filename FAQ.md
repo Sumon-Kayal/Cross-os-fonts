@@ -30,9 +30,12 @@ itself.
 
 ### Which Windows versions work?
 
-Any ISO whose image contains `sources/install.wim` or
-`sources/install.esd` — that covers Windows 10, 11, and Server
-editions, not just 11.
+The tool is implemented to support any ISO whose image contains
+`sources/install.wim` or `sources/install.esd` — that should cover
+Windows 10, 11, and Server editions, though not all combinations have
+been validated yet. See the [Project
+Roadmap](PROJECT_ROADMAP.md#validation-checklist) for what's been
+tested.
 
 ---
 
@@ -52,6 +55,12 @@ as `7zip`, and `wget2` is the actively maintained successor to `wget`.
 
 No — it's AUR-only on Arch (`yay -S wget2`). Everything else (`7zip`,
 `fontconfig`, `ntfs-3g`) is in the official repos.
+
+### What about openSUSE Leap?
+
+`wget2` is available in openSUSE Tumbleweed but not in Leap 15.6's
+default repositories. Use Tumbleweed or install `wget2` from an
+alternative source.
 
 ---
 
