@@ -27,6 +27,25 @@ echo "=================================================="
 echo "              cross-os-fonts                      "
 echo "=================================================="
 
+# --- Shared: yes/no confirmation prompt ---
+# Accepts y / yes / n / no, case-insensitive (typing the full word "yes"
+# or "no" used to be silently misread as the opposite of what the user
+# meant). Anything else, including a bare Enter, falls back to $2 (the
+# displayed default).
+# Usage: confirm "Question text" "y"   -> shows [Y/n], defaults to yes
+#        confirm "Question text" "n"   -> shows [y/N], defaults to no
+confirm() {
+    local prompt="$1" default="$2" reply hint
+    if [[ "$default" == "y" ]]; then hint="[Y/n]"; else hint="[y/N]"; fi
+    read -rp "$prompt $hint " reply
+    reply="${reply,,}"
+    case "$reply" in
+        y|yes) return 0 ;;
+        n|no)  return 1 ;;
+        *)     [[ "$default" == "y" ]] ;;
+    esac
+}
+
 # --- Shared: back up existing fonts + install ---
 install_fonts() {
     if ! command -v fc-cache &> /dev/null; then
@@ -44,10 +63,11 @@ install_fonts() {
 
     if [[ -d "$TARGET_DIR" ]] && [[ -n "$(ls -A "$TARGET_DIR" 2>/dev/null)" ]]; then
         echo ""
-        read -rp "Existing fonts found in $TARGET_DIR. Back up before overwriting? [Y/n] " backup_confirm
-        if [[ ! "$backup_confirm" =~ ^[Nn]$ ]]; then
+        if confirm "Existing fonts found in $TARGET_DIR. Back up before overwriting?" "y"; then
             mkdir -p "$BACKUP_DIR"
-            if ! cp -r "$TARGET_DIR"/* "$BACKUP_DIR/" 2>/dev/null; then
+            # "/." (not "/*") so this also catches any hidden/dotfiles —
+            # a bare glob silently matches nothing if only dotfiles exist.
+            if ! cp -r "$TARGET_DIR"/. "$BACKUP_DIR"/ 2>/dev/null; then
                 echo "❌ Backup failed. Aborting installation."
                 exit 1
             fi
@@ -56,8 +76,7 @@ install_fonts() {
     fi
 
     echo ""
-    read -rp "Install all $font_count found fonts now? [Y/n] " install_confirm
-    if [[ ! "$install_confirm" =~ ^[Nn]$ ]]; then
+    if confirm "Install all $font_count found fonts now?" "y"; then
         mkdir -p "$TARGET_DIR"
         local copy_failed=0
         while IFS= read -r -d '' font_file; do
@@ -78,11 +97,14 @@ install_fonts() {
 }
 
 # --- Shared: given a path to an ISO file, extract Fonts from it ---
+# Implemented to support both install.wim and install.esd — should work
+# with Windows 10, 11, and Server editions, though validation is incomplete.
+# Not limited to Windows 11.
 extract_fonts_from_iso() {
     local iso_path="$1"
 
     if ! command -v 7z &> /dev/null; then
-        echo "❌ '7z' is required. Install with: sudo apt install p7zip-full"
+        echo "❌ '7z' is required. Install with: sudo apt install 7zip"
         exit 1
     fi
 
@@ -95,34 +117,38 @@ extract_fonts_from_iso() {
         exit 1
     fi
 
+    rm -rf "$FONTS_EXTRACT_DIR"
     mkdir -p "$FONTS_EXTRACT_DIR"
 
-    echo "📂 Extracting install.wim from ISO..."
-    if ! 7z x "$iso_path" -o"$FONTS_EXTRACT_DIR" "sources/install.wim" -r -y > /dev/null 2>&1; then
-        echo "❌ Could not extract install.wim from ISO. ISO may be corrupt or wrong format."
+    echo "📂 Extracting Windows image from ISO..."
+    # Try both known image filenames — only one will normally exist, so
+    # the other extraction attempt is expected to fail and is ignored.
+    7z x "$iso_path" -o"$FONTS_EXTRACT_DIR" "sources/install.wim" -r -y > /dev/null 2>&1 || true
+    7z x "$iso_path" -o"$FONTS_EXTRACT_DIR" "sources/install.esd" -r -y > /dev/null 2>&1 || true
+
+    IMAGE_PATH="$FONTS_EXTRACT_DIR/sources/install.wim"
+    if [[ ! -f "$IMAGE_PATH" ]]; then
+        IMAGE_PATH="$FONTS_EXTRACT_DIR/sources/install.esd"
+    fi
+    if [[ ! -f "$IMAGE_PATH" ]]; then
+        echo "❌ Neither install.wim nor install.esd found — ISO may be corrupt or not a standard bootable Windows ISO."
         exit 1
     fi
 
-    WIM_PATH="$FONTS_EXTRACT_DIR/sources/install.wim"
-    if [[ ! -f "$WIM_PATH" ]]; then
-        echo "❌ install.wim not found — this may not be a standard bootable Windows 11 ISO."
-        exit 1
-    fi
-
-    echo "🔍 Detecting available Windows editions in install.wim..."
-    # Each edition inside a WIM shows up as a numbered top-level folder (1, 2, 3...).
+    echo "🔍 Detecting available Windows editions in $(basename "$IMAGE_PATH")..."
+    # Each edition inside the image shows up as a numbered top-level folder (1, 2, 3...).
     # Multi-edition ISOs can have several; single-edition ISOs just "1".
     # Use -slt (structured listing) for reliable parsing across 7z versions.
     local indices
-    indices=$(7z l -slt "$WIM_PATH" 2>/dev/null | grep '^Path = ' | sed 's/^Path = //' | grep -oE '^[0-9]+' | sort -un)
+    indices=$(7z l -slt "$IMAGE_PATH" 2>/dev/null | grep '^Path = ' | sed 's/^Path = //' | grep -oE '^[0-9]+' | sort -un)
     if [[ -z "$indices" ]]; then
         indices="1"
     fi
 
-    echo "📂 Extracting fonts from install.wim (this can take a minute)..."
+    echo "📂 Extracting fonts (this can take a minute)..."
     for idx in $indices; do
         rm -rf "$FONTS_EXTRACT_DIR/wim_out"
-        7z x "$WIM_PATH" -o"$FONTS_EXTRACT_DIR/wim_out" "${idx}/Windows/Fonts" -r -y > /dev/null 2>&1 || true
+        7z x "$IMAGE_PATH" -o"$FONTS_EXTRACT_DIR/wim_out" "${idx}/Windows/Fonts" -r -y > /dev/null 2>&1 || true
         FONT_SRC=$(find "$FONTS_EXTRACT_DIR/wim_out" -type d -iname "Fonts" 2>/dev/null | head -n 1)
         if [[ -n "$FONT_SRC" ]] && [[ -n "$(find "$FONT_SRC" -type f \( -iname '*.ttf' -o -iname '*.otf' -o -iname '*.ttc' \) 2>/dev/null)" ]]; then
             echo "✅ Using edition index $idx"
@@ -132,26 +158,30 @@ extract_fonts_from_iso() {
     done
 
     if [[ -z "$FONT_SRC" ]]; then
-        echo "❌ Fonts directory not found inside install.wim (tried indices: $indices)."
+        echo "❌ Fonts directory not found inside $(basename "$IMAGE_PATH") (tried indices: $indices)."
         exit 1
     fi
 }
 
 # --- Option A: download official ISO ---
 run_option_a() {
-    if ! command -v curl &> /dev/null; then
-        echo "❌ 'curl' is required. Install with: sudo apt install curl"
+    if ! command -v wget2 &> /dev/null; then
+        echo "❌ 'wget2' is required. Install with: sudo apt install wget2"
+        echo "   (Arch Linux: wget2 isn't in the official repos — install it from the AUR, e.g. 'yay -S wget2')"
         exit 1
     fi
 
     echo ""
-    echo "Open this page in your browser:"
+    echo "Open Microsoft's software-download page for the Windows version"
+    echo "you want, for example:"
     echo "  https://www.microsoft.com/software-download/windows11"
     echo ""
-    echo "Choose 'Download Windows 11 Disk Image (ISO)', select"
-    echo "the edition and language, and copy the generated link."
+    echo "Choose 'Download Disk Image (ISO)', select the edition and"
+    echo "language, and copy the generated link. Any Windows ISO whose"
+    echo "image contains sources/install.wim or sources/install.esd"
+    echo "works here — this isn't limited to Windows 11."
     echo ""
-    read -rp "Paste the Windows 11 ISO download URL here: " DOWNLOAD_URL
+    read -rp "Paste the Windows ISO download URL here: " DOWNLOAD_URL
 
     if [[ -z "$DOWNLOAD_URL" ]]; then
         echo "❌ No URL provided."
@@ -164,26 +194,28 @@ run_option_a() {
 
     mkdir -p "$BASE_DIR"
     echo "🌐 Downloading ISO (~5-6GB, be patient)..."
-    curl -L --fail -o "$ISO_FILE" "$DOWNLOAD_URL"
+    if ! wget2 -O "$ISO_FILE" "$DOWNLOAD_URL"; then
+        echo "❌ Download failed."
+        exit 1
+    fi
 
     extract_fonts_from_iso "$ISO_FILE"
     install_fonts
 
     echo ""
-    read -rp "Keep the downloaded ISO at $ISO_FILE? [y/N] " keep_iso
-    if [[ ! "$keep_iso" =~ ^[Yy]$ ]]; then
+    if confirm "Keep the downloaded ISO at $ISO_FILE?" "n"; then
+        echo "💾 ISO kept at: $ISO_FILE"
+    else
         rm -f "$ISO_FILE"
         echo "🧹 ISO deleted."
-    else
-        echo "💾 ISO kept at: $ISO_FILE"
     fi
-    rm -rf "$FONTS_EXTRACT_DIR/wim_out" "$FONTS_EXTRACT_DIR/sources"
+    rm -rf "$FONTS_EXTRACT_DIR"
 }
 
 # --- Option C: use an already-downloaded ISO on disk ---
 run_option_c() {
     echo ""
-    read -rp "Paste the full path to your existing Windows 11 ISO: " LOCAL_ISO_PATH
+    read -rp "Paste the full path to your existing Windows ISO: " LOCAL_ISO_PATH
 
     if [[ -z "$LOCAL_ISO_PATH" ]]; then
         echo "❌ No path provided."
@@ -197,15 +229,13 @@ run_option_c() {
         exit 1
     fi
     if [[ "$LOCAL_ISO_PATH" != *.iso && "$LOCAL_ISO_PATH" != *.ISO ]]; then
-        echo "⚠️  That file doesn't have a .iso extension — continue anyway? [y/N]"
-        read -rp "> " confirm
-        [[ "$confirm" =~ ^[Yy]$ ]] || exit 1
+        confirm "⚠️  That file doesn't have a .iso extension — continue anyway?" "n" || exit 1
     fi
 
     extract_fonts_from_iso "$LOCAL_ISO_PATH"
     install_fonts
 
-    rm -rf "$FONTS_EXTRACT_DIR/wim_out" "$FONTS_EXTRACT_DIR/sources"
+    rm -rf "$FONTS_EXTRACT_DIR"
     echo "ℹ️  Original ISO left untouched at: $LOCAL_ISO_PATH"
 }
 
@@ -261,12 +291,15 @@ run_option_b() {
 
     if [[ "$MOUNTED_BY_SCRIPT" -eq 1 ]]; then
         echo ""
-        read -rp "Unmount $DRIVE_PATH now? [Y/n] " unmount_confirm
-        if [[ ! "$unmount_confirm" =~ ^[Nn]$ ]]; then
-            sudo umount "$MOUNT_POINT"
-            rmdir "$MOUNT_POINT" 2>/dev/null || true
-            MOUNTED_BY_SCRIPT=0
-            echo "🔌 Unmounted."
+        if confirm "Unmount $DRIVE_PATH now?" "y"; then
+            if sudo umount "$MOUNT_POINT"; then
+                rmdir "$MOUNT_POINT" 2>/dev/null || true
+                MOUNTED_BY_SCRIPT=0
+                echo "🔌 Unmounted."
+            else
+                echo "⚠️  Unmount failed — you may need to run: sudo umount $MOUNT_POINT"
+                echo "   (the script will retry silently on exit)"
+            fi
         else
             MOUNTED_BY_SCRIPT=0
             echo "ℹ️  Mount preserved at $MOUNT_POINT"
@@ -277,9 +310,9 @@ run_option_b() {
 # --- Menu ---
 echo ""
 echo "How do you want to get the fonts?"
-echo "  [A] Download the official Windows 11 ISO from Microsoft"
+echo "  [A] Download an official Windows ISO from Microsoft"
 echo "  [B] Use an existing dual-boot Windows partition on this machine"
-echo "  [C] Use a Windows 11 ISO you already have downloaded"
+echo "  [C] Use a Windows ISO you already have downloaded"
 echo ""
 read -rp "Choose A, B, or C: " MODE
 
