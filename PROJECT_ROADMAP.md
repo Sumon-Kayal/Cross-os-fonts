@@ -5,8 +5,8 @@
 ## Vision
 
 Provide the easiest and safest way to install Windows system fonts on
-Linux using a user's own licensed Windows installation media or
-installation.
+Linux using a user's own licensed Windows installation media or an
+existing Windows installation.
 
 ------------------------------------------------------------------------
 
@@ -33,8 +33,8 @@ installation.
 - [x] Replaced `curl` with `wget2`
 - [x] Replaced `p7zip`/`p7zip-full` with `7zip` (current official
       package name on Arch, Fedora, Debian/Ubuntu, and openSUSE)
-- [x] Generalized "Windows 11"-only wording -- any Windows 10/11/Server
-      ISO now works
+- [x] Generalized "Windows 11"-only wording -- implemented to support
+      Windows 10/11/Server ISOs, validation incomplete
 - [x] README rewritten: table of contents, per-distro pre-flight
       checklist, uninstall instructions, expanded troubleshooting
 

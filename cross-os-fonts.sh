@@ -97,9 +97,9 @@ install_fonts() {
 }
 
 # --- Shared: given a path to an ISO file, extract Fonts from it ---
-# Supports both install.wim and install.esd, so this works with any
-# Windows ISO Microsoft ships an image for (Vista SP1 through 11, plus
-# Server editions) — not just Windows 11.
+# Implemented to support both install.wim and install.esd — should work
+# with Windows 10, 11, and Server editions, though validation is incomplete.
+# Not limited to Windows 11.
 extract_fonts_from_iso() {
     local iso_path="$1"
 

@@ -117,21 +117,43 @@ and the font cache is refreshed automatically.
 
 # Requirements
 
-Every distro needs `wget2` (downloads the ISO in Option A), `7zip` (reads the ISO/image in Options A and C), `fontconfig` (refreshes the font cache), and `ntfs-3g` (mounts an NTFS Windows partition in Option B).
+Dependencies vary by option:
+- **Option A** (download ISO): `wget2`, `7zip`, `fontconfig`
+- **Option B** (dual-boot partition): `fontconfig`, and `ntfs-3g` if mounting an NTFS block device
+- **Option C** (existing ISO): `7zip`, `fontconfig`
 
 ## Debian / Ubuntu
 
+Install dependencies for your chosen option:
+
 ```bash
-sudo apt install wget2 7zip fontconfig ntfs-3g
+# Option A (download ISO):
+sudo apt install wget2 7zip fontconfig
+
+# Option B (dual-boot partition):
+sudo apt install fontconfig ntfs-3g
+
+# Option C (existing ISO):
+sudo apt install 7zip fontconfig
 ```
 
 ## Arch Linux
 
+Install dependencies for your chosen option:
+
 ```bash
-sudo pacman -S 7zip fontconfig ntfs-3g
+# Option A (download ISO):
+sudo pacman -S 7zip fontconfig
+# Plus wget2 from AUR (see below)
+
+# Option B (dual-boot partition):
+sudo pacman -S fontconfig ntfs-3g
+
+# Option C (existing ISO):
+sudo pacman -S 7zip fontconfig
 ```
 
-`wget2` isn't in Arch's official repos — install it from the AUR with your preferred helper:
+For **Option A**, `wget2` isn't in Arch's official repos — install it from the AUR with your preferred helper:
 
 ```bash
 yay -S wget2
@@ -148,21 +170,41 @@ makepkg -si
 
 ## Fedora
 
+Install dependencies for your chosen option:
+
 ```bash
-sudo dnf install wget2 7zip fontconfig ntfs-3g
+# Option A (download ISO):
+sudo dnf install wget2 7zip fontconfig
+
+# Option B (dual-boot partition):
+sudo dnf install fontconfig ntfs-3g
+
+# Option C (existing ISO):
+sudo dnf install 7zip fontconfig
 ```
 
 ## openSUSE
 
 ### openSUSE Tumbleweed
 
+Install dependencies for your chosen option:
+
 ```bash
-sudo zypper install wget2 7zip fontconfig ntfs-3g
+# Option A (download ISO):
+sudo zypper install wget2 7zip fontconfig
+
+# Option B (dual-boot partition):
+sudo zypper install fontconfig ntfs-3g
+
+# Option C (existing ISO):
+sudo zypper install 7zip fontconfig
 ```
 
 ### openSUSE Leap 15.6
 
-`wget2` is not available in the default Leap 15.6 repositories. Use Tumbleweed or install `wget2` from an alternative source.
+For **Option A**, `wget2` is not available in the default Leap 15.6 repositories. Use Tumbleweed or install `wget2` from an alternative source.
+
+For **Option B** or **Option C**, install the dependencies as shown above (excluding `wget2`).
 
 ---
 
@@ -172,36 +214,37 @@ Tick these off before running the script — saves a false start partway through
 
 ## Debian / Ubuntu
 - [ ] `sudo apt update`
-- [ ] `sudo apt install wget2 7zip fontconfig ntfs-3g`
-- [ ] `wget2 --version` runs without error
-- [ ] `7z` runs without error (prints the 7-Zip banner)
-- [ ] `fc-cache --version` runs without error
+- [ ] Install dependencies for your chosen option (see [Requirements](#requirements))
+- [ ] **Option A only:** `wget2 --version` runs without error
+- [ ] **Options A and C only:** `7z` runs without error (prints the 7-Zip banner)
+- [ ] All options: `fc-cache --version` runs without error
 
 ## Arch Linux
-- [ ] `sudo pacman -S 7zip fontconfig ntfs-3g`
-- [ ] `wget2` installed from the AUR (`yay -S wget2` or manual `makepkg -si`)
-- [ ] `wget2 --version` runs without error
-- [ ] `7z` runs without error
-- [ ] `fc-cache --version` runs without error
+- [ ] Install dependencies for your chosen option (see [Requirements](#requirements))
+- [ ] **Option A only:** `wget2` installed from the AUR (`yay -S wget2` or manual `makepkg -si`)
+- [ ] **Option A only:** `wget2 --version` runs without error
+- [ ] **Options A and C only:** `7z` runs without error
+- [ ] All options: `fc-cache --version` runs without error
 
 ## Fedora
-- [ ] `sudo dnf install wget2 7zip fontconfig ntfs-3g`
-- [ ] `wget2 --version` runs without error
-- [ ] `7z` runs without error
-- [ ] `fc-cache --version` runs without error
+- [ ] Install dependencies for your chosen option (see [Requirements](#requirements))
+- [ ] **Option A only:** `wget2 --version` runs without error
+- [ ] **Options A and C only:** `7z` runs without error
+- [ ] All options: `fc-cache --version` runs without error
 
 ## openSUSE
-- [ ] `sudo zypper install wget2 7zip fontconfig ntfs-3g`
-- [ ] `wget2 --version` runs without error
-- [ ] `7z` runs without error
-- [ ] `fc-cache --version` runs without error
+- [ ] Install dependencies for your chosen option (see [Requirements](#requirements))
+- [ ] **Option A only:** `wget2 --version` runs without error
+- [ ] **Options A and C only:** `7z` runs without error
+- [ ] All options: `fc-cache --version` runs without error
 
 ## All distros, regardless of which option you'll use
 - [ ] Decided which install method you'll use (A: download, B: dual-boot partition, C: existing ISO)
 - [ ] **Option A only:** ~12 GB free under `$HOME` (the ISO and its extracted image both land there before cleanup)
-- [ ] **Option B only:** `ntfs-3g` installed, and you know the mount path or block device (e.g. `/dev/sda2`) — plus `sudo` access, since mounting needs it
+- [ ] **Option B only:** `ntfs-3g` installed if mounting an NTFS block device, and you know the mount path or block device (e.g. `/dev/sda2`) — plus `sudo` access, since mounting needs it
 - [ ] **Option B only:** Windows is fully shut down (not Fast Startup / hibernated) and not BitLocker-encrypted, or the mount will fail
 - [ ] **Option C only:** you know the full path to your existing ISO
+- [ ] **Option C only:** temporary free space under `$HOME/.cross-os-fonts/extract` for install.wim or install.esd, and wim_out (cleaned up automatically afterward)
 
 ---
 
